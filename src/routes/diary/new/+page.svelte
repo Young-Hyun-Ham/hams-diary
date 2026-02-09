@@ -1,0 +1,352 @@
+<!-- src/routes/diary/new/+page.svelte -->
+<script lang="ts">
+  import { goto } from "$app/navigation";
+  import { page } from "$app/stores";
+  import { userState } from "$lib/stores/user";
+  import { addDiary } from "$lib/firebase/diaryRepo";
+  import { uploadDiaryImage, type UploadedImage } from "$lib/firebase/storageRepo";
+  import RichTextarea from "$lib/components/RichTextarea.svelte";
+
+  function toYmd(d: Date) {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${y}-${m}-${day}`;
+  }
+
+  // query: ?date=YYYY-MM-DD 가 있으면 그 날짜로 기본 세팅
+  $: qDate = $page.url.searchParams.get("date");
+  let diaryDate = qDate ?? toYmd(new Date());
+
+  let title = "";
+  let favorite = false;
+
+  // RichTextarea가 바인딩할 값들
+  let contentHtml = "";
+  let contentText = "";
+  let pending = new Map<string, { file: File; url: string }>();
+
+  let contentImages: UploadedImage[] = []; // 본문용
+  let attachments: UploadedImage[] = [];  // 하단 첨부용
+  
+  // 이미지 선택/미리보기
+  let files: File[] = [];
+  let previews: string[] = [];
+
+  let saving = false;
+  let errorMsg = "";
+  
+  const diaryId =
+    (globalThis.crypto?.randomUUID?.() ?? `d_${Date.now()}_${Math.random().toString(16).slice(2)}`);
+
+  async function uploadPendingAndPatchHtml(uid: string) {
+    // DOM 파서로 img[data-local] 찾아서 치환
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(contentHtml || "", "text/html");
+
+    const imgs = Array.from(doc.querySelectorAll("img[data-local]")) as HTMLImageElement[];
+
+    const uploaded: UploadedImage[] = [];
+
+    for (const img of imgs) {
+      const localId = img.getAttribute("data-local") || "";
+      const item = pending.get(localId);
+      if (!item) continue;
+
+      // 여기서만 업로드
+      const u = await uploadDiaryImage(uid, diaryId, item.file);
+      uploaded.push(u);
+
+      // src를 실제 URL로 변경 + storage path 저장(나중에 삭제용)
+      img.src = u.url;
+      img.setAttribute("data-path", u.path);
+
+      // local 속성 제거(임시표시 제거)
+      img.removeAttribute("data-local");
+    }
+
+    // content 업로드 목록 누적
+    contentImages = [...contentImages, ...uploaded];
+
+    // 치환된 HTML로 교체
+    contentHtml = doc.body.innerHTML;
+
+    // 저장 후에는 pending 정리(로컬 URL revoke)
+    for (const [, v] of pending) URL.revokeObjectURL(v.url);
+    pending = new Map();
+
+    return uploaded;
+  }
+  
+  // 선택한 이미지(저장 전)
+  let imgFiles: File[] = [];
+  let imgPreviews: { url: string; name: string; size: number }[] = [];
+
+  function onPickImages(e: Event) {
+    const input = e.currentTarget as HTMLInputElement;
+    const files = input.files ? Array.from(input.files) : [];
+    if (!files.length) return;
+
+    // 기존 선택 유지 + 추가(append)
+    const nextFiles = [...imgFiles, ...files];
+    imgFiles = nextFiles;
+
+    // preview도 추가
+    const nextPrev = [
+      ...imgPreviews,
+      ...files.map((f) => ({ url: URL.createObjectURL(f), name: f.name, size: f.size })),
+    ];
+    imgPreviews = nextPrev;
+
+    // 같은 파일 다시 선택 가능하도록 reset
+    input.value = "";
+  }
+
+  function removeImageAt(i: number) {
+    const nextFiles = imgFiles.slice();
+    const nextPrev = imgPreviews.slice();
+
+    URL.revokeObjectURL(nextPrev[i].url);
+    nextFiles.splice(i, 1);
+    nextPrev.splice(i, 1);
+
+    imgFiles = nextFiles;
+    imgPreviews = nextPrev;
+  }
+
+  function backToList() {
+    // date filter 유지해서 돌아가기
+    goto(`/diary?date=${encodeURIComponent(diaryDate)}`);
+  }
+
+  async function save() {
+    errorMsg = "";
+    if (saving) return;
+
+    const uid = $userState.user?.uid;
+    if (!uid) return (errorMsg = "로그인이 필요해요.");
+    if (!contentText.trim()) return (errorMsg = "내용을 입력해줘.");
+
+    saving = true;
+
+    try {
+      // 1) 본문(pending) 업로드 + html 치환 (여기서 images에 누적됨)
+      await uploadPendingAndPatchHtml(uid);
+
+      if (contentHtml.includes('src="blob:') || contentHtml.includes("src='blob:")) {
+        throw new Error("본문에 업로드되지 않은 blob 이미지가 남아있어요. data-local 삽입을 확인하세요.");
+      }
+
+      // 2) 하단 첨부 이미지 업로드
+      const uploadedBottom: UploadedImage[] = [];
+      for (const f of imgFiles) {
+        const u = await uploadDiaryImage(uid, diaryId, f);
+        uploadedBottom.push(u);
+      }
+
+      // ✅ 3) images에 합쳐서 저장
+      attachments = [...attachments, ...uploadedBottom];
+      const actorName = $userState.user?.displayName ?? "";
+      await addDiary(
+        uid,
+          {
+          diaryDate,
+          title: title.trim(),
+          contentHtml,
+          contentText,
+          favorite,
+          contentImages,
+          attachments,
+        }, 
+        diaryId,
+        actorName,
+      );
+
+      await goto(`/diary?date=${encodeURIComponent(diaryDate)}`);
+    } catch (e: any) {
+      errorMsg = e?.message ?? "저장 실패";
+    } finally {
+      saving = false;
+    }
+  }
+</script>
+
+<div class="wrap">
+  <div class="topbar">
+    <button class="btn" type="button" on:click={backToList}>← 목록</button>
+    <div class="spacer"></div>
+    <button class="btn primary" type="button" on:click={save} disabled={saving}>
+      {saving ? "저장 중..." : "저장"}
+    </button>
+  </div>
+
+  <div class="panel">
+    <label class="field">
+      <div class="label">기록 날짜</div>
+      <input class="input" type="date" bind:value={diaryDate} />
+    </label>
+
+    <label class="field">
+      <div class="label">제목</div>
+      <input class="input" placeholder="오늘의 제목" bind:value={title} />
+    </label>
+
+    <div class="field">
+      <div class="label">내용</div>
+
+      <!-- textarea처럼 보이지만, 글+이미지 혼합 가능 -->
+      <RichTextarea
+        placeholder="오늘의 이야기를 적어보세요…"
+        bind:html={contentHtml}
+        bind:text={contentText}
+        bind:pending
+      />
+    </div>
+
+    <label class="favRow">
+      <input type="checkbox" bind:checked={favorite} />
+      <span>즐겨찾기</span>
+    </label>
+
+    <div class="panel">
+      <!-- 기존 제목/내용 UI 그대로 두고, 아래만 추가 -->
+
+      <label class="field">
+        <div class="label">이미지</div>
+
+        <input
+          class="input"
+          type="file"
+          accept="image/*"
+          multiple
+          on:change={onPickImages}
+        />
+
+        <div class="hint">* 여러 장 선택 가능 (추가로 계속 선택할 수 있어요)</div>
+
+        {#if imgPreviews.length}
+          <div class="grid">
+            {#each imgPreviews as p, i}
+              <div class="thumb">
+                <img src={p.url} alt={p.name} />
+                <button type="button" class="x" on:click={() => removeImageAt(i)}>×</button>
+              </div>
+            {/each}
+          </div>
+        {/if}
+      </label>
+
+      {#if errorMsg}<div class="err">{errorMsg}</div>{/if}
+
+      <button class="cta" type="button" on:click={save} disabled={saving}>
+        {saving ? "저장 중..." : "저장하기"}
+      </button>
+    </div>
+  </div>
+</div>
+
+<style>
+  .wrap { display:grid; gap: 12px; }
+
+  .topbar {
+    display:flex;
+    align-items:center;
+    gap: 10px;
+  }
+  .spacer { flex: 1; }
+
+  .btn {
+    padding: 10px 12px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--text);
+    font-size: 13px;
+    cursor: pointer;
+  }
+  .primary {
+    background: #4f46e5;
+    color: #fff;
+    border: none;
+    font-weight: 800;
+  }
+  .btn:disabled { opacity: 0.7; cursor: default; }
+
+  .panel {
+    padding: 16px;
+    border-radius: 18px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    display:grid;
+    gap: 12px;
+  }
+
+  .field { display:grid; gap: 6px; }
+  .label { font-size: 12px; opacity: 0.7; }
+
+  .input {
+    padding: 12px;
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text);
+    outline: none;
+  }
+  
+  .favRow {
+    display:flex;
+    align-items:center;
+    gap: 8px;
+    font-size: 13px;
+    opacity: 0.9;
+  }
+
+  .err { color:#ef4444; font-size: 13px; }
+
+  .cta {
+    margin-top: 4px;
+    padding: 12px 14px;
+    border-radius: 14px;
+    border: none;
+    background: #4f46e5;
+    color: white;
+    font-weight: 900;
+    cursor: pointer;
+  }
+  .cta:disabled { opacity: 0.7; cursor: default; }
+  
+  .hint { font-size: 12px; opacity: 0.6; margin-top: 6px; }
+
+  .grid {
+    margin-top: 10px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+  .thumb {
+    position: relative;
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    background: var(--card);
+    aspect-ratio: 1 / 1;
+  }
+  .thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .x {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 28px;
+    height: 28px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: rgba(0,0,0,0.45);
+    color: white;
+    cursor: pointer;
+  }
+</style>
