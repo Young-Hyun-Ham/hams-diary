@@ -28,3 +28,6 @@ pnpm-lock.yaml
 
 # vscode setting file
 .vscode
+
+# service-account-key file
+service-account.json
