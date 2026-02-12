@@ -7,12 +7,12 @@
   import { signOut } from "firebase/auth";
   import { goto } from "$app/navigation";
 
-  const allowList = ["hyh8414@gmail.com"];
+  const allowList = import.meta.env.VITE_ADMIN_ALLOW_LIST;
   // $: 를 사용하면 $userState.user가 바뀔 때마다 자동으로 실행됩니다.
   $: isAdmin = allowList.includes($userState.user?.email ?? "");
 
   // 확인용 로그 (값이 바뀔 때마다 찍힘)
-  $: console.log("관리자 여부:", isAdmin, "사용자:", $userState.user?.email);
+  // $: console.log("관리자 여부:", isAdmin, "사용자:", $userState.user?.email);
 
   async function logout() {
     await signOut(auth);
@@ -36,7 +36,7 @@
             {:else}
               {$userState.user.displayName ?? "사용자"}
             {/if}
-            <!-- ✅ 휴지통 버튼 -->
+            <!-- 휴지통 버튼 -->
             <a class="trashBtn" href="/trash" title="휴지통" aria-label="휴지통">
               <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
                 <path fill="currentColor"

@@ -4,6 +4,17 @@
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		%sveltekit.head%
+
+    <script>
+      (function () {
+        try {
+          const KEY = "hdp:theme:v1"; // ThemeToggle과 동일하게
+          const saved = localStorage.getItem(KEY);
+          const theme = saved || "light";
+          document.documentElement.dataset.theme = theme;
+        } catch (e) {}
+      })();
+    </script>
 	</head>
 	<body data-sveltekit-preload-data="hover">
 		<div style="display: contents">%sveltekit.body%</div>

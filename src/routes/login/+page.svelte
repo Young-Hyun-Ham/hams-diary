@@ -2,30 +2,64 @@
 <script lang="ts">
   import { browser } from "$app/environment";
   import { goto } from "$app/navigation";
-  import { GoogleAuthProvider, signInWithPopup, signInWithRedirect } from "firebase/auth";
-  import { auth } from "$lib/firebase/client";
+  import { onMount } from "svelte";
   import { userState } from "$lib/stores/user";
-  import { get } from "svelte/store";
+
+  import {
+    GoogleAuthProvider,
+    signInWithPopup,
+    signInWithRedirect,
+    getRedirectResult,
+    type User,
+  } from "firebase/auth";
+  import { auth } from "$lib/firebase/client";
 
   let errorMsg = "";
   let busy = false;
 
+  function waitForUser(): Promise<User> {
+    return new Promise((resolve, reject) => {
+      const unsub = userState.subscribe((s) => {
+        if (!s.loading && s.user) {
+          unsub();
+          resolve(s.user);
+        }
+      });
+
+      // 혹시 모를 무한 대기 방지 (10초)
+      const t = setTimeout(() => {
+        unsub();
+        reject(new Error("로그인 상태 확인이 지연되고 있어요. 다시 시도해 주세요."));
+      }, 10_000);
+
+      // resolve/reject 시 타이머 정리
+      userState.subscribe((s) => {
+        if (!s.loading && s.user) clearTimeout(t);
+      });
+    });
+  }
+
   async function loginGoogle() {
     errorMsg = "";
     busy = true;
+
     try {
       const provider = new GoogleAuthProvider();
 
-      // ✅ Capacitor/모바일 WebView는 popup이 막히는 경우가 있어서 redirect도 대비
-      // 데스크톱/웹: popup, 그 외: redirect를 써도 됨
-      if (browser) {
-        await signInWithPopup(auth, provider);
-      } else {
-        await signInWithRedirect(auth, provider);
-      }
+      // Capacitor(네이티브 WebView)는 popup이 막히는 경우가 많음
+      const isCapacitor = browser && !!(window as any)?.Capacitor;
 
-      // 로그인 성공하면 /diary로
-      await goto("/diary");
+      if (isCapacitor) {
+        await signInWithRedirect(auth, provider);
+        return;
+        // redirect는 여기서 끝 (페이지가 떠나므로 아래 goto는 의미 없음)
+        return;
+      } else {
+        await signInWithPopup(auth, provider);
+        // auth 상태가 store에 반영될 때까지 기다렸다가 이동(레이스 방지)
+        await waitForUser();
+        await goto("/diary", { replaceState: true });
+      }
     } catch (e: any) {
       errorMsg = e?.message ?? "로그인에 실패했어요.";
     } finally {
@@ -33,10 +67,23 @@
     }
   }
 
-  // 이미 로그인 상태면 바로 이동
-  if (browser) {
-    const s = get(userState);
-    if (!s.loading && s.user) goto("/diary");
+  // redirect 로그인 흐름 처리 (Capacitor에서 필요)
+  onMount(async () => {
+    try {
+      const r = await getRedirectResult(auth);
+      if (r?.user) {
+        // 여기까지 오면 redirect 로그인 자체는 성공
+        // 이동은 $: 반응형이 처리
+      }
+    } catch (e: any) {
+      console.error("getRedirectResult failed:", e);
+      errorMsg = e?.message ?? "redirect 로그인 결과 처리에 실패했어요.";
+    }
+  });
+
+  // 이미 로그인 상태면 즉시 /diary 이동 (반응형)
+  $: if (browser && !$userState.loading && $userState.user) {
+    goto("/diary", { replaceState: true });
   }
 </script>
 

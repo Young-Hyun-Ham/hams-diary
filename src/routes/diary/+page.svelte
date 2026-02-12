@@ -62,6 +62,14 @@
     goto("/diary");
   }
 
+  function openTimeline() {
+    goto("/timeline");
+  }
+
+  function openFavicon() {
+    goto("/favorites");
+  }
+
   function openCalendar() {
     goto("/diary/calendar");
   }
@@ -104,6 +112,8 @@
     </div>
 
     <div class="right">
+      <button class="btn" type="button" on:click={openFavicon}>즐겨찾기</button>
+      <button class="btn" type="button" on:click={openTimeline}>타임라인</button>
       <button class="btn" type="button" on:click={openCalendar}>달력</button>
     </div>
   </div>

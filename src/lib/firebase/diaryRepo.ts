@@ -18,6 +18,12 @@ export type DiaryInput = {
   tags?: string[];
   favorite?: boolean;
 
+  // timeline
+  showOnTimeline?: boolean;
+  timelineTitle?: string;
+  timelineSummary?: string;
+  timelineDate?: string;
+
   contentImages?: UploadedImage[]; // 본문에 삽입된 이미지
   attachments?: UploadedImage[];   // 하단 첨부 이미지(리스트로만 보여줄 것)
 };
@@ -69,6 +75,11 @@ export async function addDiary(
       mood: input.mood ?? null,
       tags: input.tags ?? [],
       favorite: input.favorite ?? false,
+
+      showOnTimeline: input.showOnTimeline ?? true,
+      timelineTitle: input.timelineTitle ?? "",
+      timelineSummary: input.timelineSummary ?? "",
+      timelineDate: input.timelineDate ?? input.diaryDate,
 
       contentImages: input.contentImages ?? [],
       attachments: input.attachments ?? [],
@@ -135,6 +146,12 @@ export async function updateDiary(uid: string, diaryId: string, patch: DiaryUpda
       ...("attachments" in patch ? { attachments: patch.attachments ?? [] } : {}),
 
       ...("favorite" in patch ? { favorite: !!patch.favorite } : {}),
+      // 타임라인 patch 반영
+      ...("showOnTimeline" in patch ? { showOnTimeline: patch.showOnTimeline ?? true } : {}),
+      ...("timelineTitle" in patch ? { timelineTitle: patch.timelineTitle ?? "" } : {}),
+      ...("timelineSummary" in patch ? { timelineSummary: patch.timelineSummary ?? "" } : {}),
+      ...("timelineDate" in patch ? { timelineDate: patch.timelineDate ?? patch.diaryDate ?? prev.diaryDate } : {}),
+
       ...(nextDay !== prevDay ? { diaryDate: nextDay } : {}),
       updatedAt: serverTimestamp(),
     });

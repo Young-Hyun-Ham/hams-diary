@@ -11,7 +11,7 @@
 
   let busyId: string | null = null;
 
-  // ✅ 전체 작업 상태
+  // 전체 작업 상태
   let bulkMode: "restore" | "delete" | null = null;
   let bulkDone = 0;
   let bulkTotal = 0;
@@ -19,7 +19,7 @@
   // ===============================================================================
   // 안내 문구
   const TTL_MS = 24 * 60 * 60 * 1000;
-  const WARN_MS = 2 * 60 * 60 * 1000; // ✅ 2시간 이하 남으면 강조(원하면 3시간으로 변경)
+  const WARN_MS = 2 * 60 * 60 * 1000; // 2시간 이하 남으면 강조(원하면 3시간으로 변경)
 
   function toMs(ts: any) {
     if (!ts) return null;
@@ -122,7 +122,7 @@
     goto(`/diary/${id}`);
   }
 
-  // ✅ 전체 복원
+  // 전체 복원
   async function restoreAll() {
     const uid = $userState.user?.uid;
     if (!uid) return;
@@ -151,7 +151,7 @@
     }
   }
 
-  // ✅ 전체 삭제(이미지 포함 hard delete)
+  // 전체 삭제(이미지 포함 hard delete)
   async function deleteAll() {
     const uid = $userState.user?.uid;
     if (!uid) return;
@@ -204,7 +204,7 @@
       </div>
     </div>
     <div class="spacer"></div>
-    <!-- ✅ 전체 버튼: 새로고침 좌측 -->
+    <!-- 전체 버튼: 새로고침 좌측 -->
     <div class="bulk">
       <button class="btn" on:click={load} disabled={loading || bulkRunning}>
         새로고침
@@ -282,7 +282,7 @@
 
     white-space: nowrap;
     line-height: 1;
-    flex-shrink: 0; /* ✅ 줄어들면서 깨지는 것 방지 */
+    flex-shrink: 0; /* 줄어들면서 깨지는 것 방지 */
   }
 
   .bulk { display:flex; gap: 8px; align-items:center; }
@@ -336,7 +336,7 @@
     display:flex;
     align-items:center;
     gap: 10px;
-    flex-wrap: wrap;   /* ✅ 기본은 wrap (모바일 대응) */
+    flex-wrap: wrap;   /* 기본은 wrap (모바일 대응) */
   }
 
   /* 왼쪽(제목+안내)은 한 줄 영역 */
@@ -379,7 +379,7 @@
     opacity: 0.75;
   }
 
-  /* ✅ 데스크톱(웹): 한 줄 고정 + 버튼 오른쪽 */
+  /* 데스크톱(웹): 한 줄 고정 + 버튼 오른쪽 */
   @media (min-width: 769px){
     .topbar{ flex-wrap: nowrap; }
     .note{ max-width: 560px; }
@@ -390,11 +390,11 @@
     }
   }
 
-  /* ✅ 모바일: 버튼을 “다음 줄로” 내리고, 오른쪽으로 붙이기 */
+  /* 모바일: 버튼을 “다음 줄로” 내리고, 오른쪽으로 붙이기 */
   @media (max-width: 768px){
     .bulk{
-      flex-basis: 100%;        /* ✅ 다음 줄로 */
-      justify-content: flex-end; /* ✅ 우측 정렬 */
+      flex-basis: 100%;        /* 다음 줄로 */
+      justify-content: flex-end; /* 우측 정렬 */
       margin-top: 2px;
     }
 
@@ -404,12 +404,12 @@
       padding: 8px 10px;
     }
     .noteText{
-      white-space: normal;  /* ✅ 2줄 허용 */
+      white-space: normal;  /* 2줄 허용 */
       line-height: 1.35;
     }
   }
 
-  /* ✅ 남은 시간 배지 */
+  /* 남은 시간 배지 */
   .ttlBadge{
     padding: 2px 8px;
     border-radius: 999px;
@@ -420,13 +420,13 @@
     white-space: nowrap;
   }
 
-  /* ✅ 24시간 임박: 카드 테두리/배경만 살짝 강조 */
+  /* 24시간 임박: 카드 테두리/배경만 살짝 강조 */
   .row.urgent{
     border-color: rgba(245, 158, 11, 0.35); /* amber 계열 */
     box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.10);
   }
 
-  /* ✅ 만료(이미 24시간 지남): 흐리게 표시(관리자 삭제 대상) */
+  /* 만료(이미 24시간 지남): 흐리게 표시(관리자 삭제 대상) */
   .row.expired{
     opacity: 0.8;
   }

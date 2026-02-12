@@ -19,7 +19,7 @@ export type DiaryDaySummary = {
 };
 
 /**
- * ✅ 달력용: 특정 월(YYYY-MM)의 diaryDays를 한 번에 조회
+ * 달력용: 특정 월(YYYY-MM)의 diaryDays를 한 번에 조회
  * - users/{uid}/diaryDays
  * - date >= start AND date < end
  */

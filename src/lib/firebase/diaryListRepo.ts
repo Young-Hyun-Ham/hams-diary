@@ -19,6 +19,12 @@ export type DiaryListItem = {
   favorite?: boolean;
   createdAt?: any;
   updatedAt?: any;
+  
+  // 타임라인
+  showOnTimeline?: boolean;
+  timelineTitle?: string;
+  timelineSummary?: string;
+  timelineDate?: string;
 };
 
 // 공통: diaries 컬렉션
@@ -32,10 +38,16 @@ function toItem(docSnap: any): DiaryListItem {
     id: docSnap.id,
     diaryDate: v.diaryDate,
     title: v.title ?? "",
-    content: v.content ?? "",
+    // 프로젝트의 실제 저장 필드: contentText
+    content: v.contentText ?? "",
     favorite: !!v.favorite,
     createdAt: v.createdAt,
     updatedAt: v.updatedAt,
+    // 타임라인
+    showOnTimeline: v.showOnTimeline ?? true,
+    timelineTitle: v.timelineTitle ?? "",
+    timelineSummary: v.timelineSummary ?? "",
+    timelineDate: v.timelineDate ?? v.diaryDate,
   };
 }
 
@@ -56,6 +68,78 @@ export async function listDiaries(uid: string, pageSize = 20, cursor?: QueryDocu
     : query(
         diariesCol(uid),
         where("deleted", "==", false),
+        orderBy("diaryDate", "desc"),
+        orderBy("updatedAt", "desc"),
+        limit(pageSize)
+      );
+
+  const snap = await getDocs(q);
+  const items = snap.docs.map(toItem);
+  const nextCursor = snap.docs.length ? snap.docs[snap.docs.length - 1] : undefined;
+  return { items, nextCursor };
+}
+
+/**
+ * 타임라인 전용 목록
+ * - deleted == false
+ * - showOnTimeline == true
+ * - timelineDate desc, updatedAt desc
+ */
+export async function listTimelineDiaries(
+  uid: string,
+  pageSize = 20,
+  cursor?: QueryDocumentSnapshot
+) {
+  const q = cursor
+    ? query(
+        diariesCol(uid),
+        where("deleted", "==", false),
+        where("showOnTimeline", "==", true),
+        orderBy("timelineDate", "desc"),
+        orderBy("updatedAt", "desc"),
+        startAfter(cursor),
+        limit(pageSize)
+      )
+    : query(
+        diariesCol(uid),
+        where("deleted", "==", false),
+        where("showOnTimeline", "==", true),
+        orderBy("timelineDate", "desc"),
+        orderBy("updatedAt", "desc"),
+        limit(pageSize)
+      );
+
+  const snap = await getDocs(q);
+  const items = snap.docs.map(toItem);
+  const nextCursor = snap.docs.length ? snap.docs[snap.docs.length - 1] : undefined;
+  return { items, nextCursor };
+}
+
+/**
+ * 즐겨찾기 목록 (최신순)
+ * - favorite == true
+ * - deleted == false
+ * - diaryDate desc, updatedAt desc
+ */
+export async function listFavoriteDiaries(
+  uid: string,
+  pageSize = 20,
+  cursor?: QueryDocumentSnapshot
+) {
+  const q = cursor
+    ? query(
+        diariesCol(uid),
+        where("deleted", "==", false),
+        where("favorite", "==", true),
+        orderBy("diaryDate", "desc"),
+        orderBy("updatedAt", "desc"),
+        startAfter(cursor),
+        limit(pageSize)
+      )
+    : query(
+        diariesCol(uid),
+        where("deleted", "==", false),
+        where("favorite", "==", true),
         orderBy("diaryDate", "desc"),
         orderBy("updatedAt", "desc"),
         limit(pageSize)

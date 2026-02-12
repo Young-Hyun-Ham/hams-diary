@@ -92,7 +92,7 @@ export async function listDeletedDiaries(uid: string, take = 100): Promise<Trash
   return snaps.docs.map((d) => ({ id: d.id, ...(d.data() as any) }));
 }
 
-// ✅ 복원: softDeleteDiary의 반대 로직(트랜잭션 + diaryDays 복원)
+// 복원: softDeleteDiary의 반대 로직(트랜잭션 + diaryDays 복원)
 export async function restoreDiary(uid: string, diaryId: string) {
   const dRef = diaryRef(uid, diaryId);
 
@@ -116,8 +116,8 @@ export async function restoreDiary(uid: string, diaryId: string) {
       updatedAt: serverTimestamp(),
     });
 
-    // ✅ 핵심: 존재/미존재 상관없이 항상 +1
-    // ✅ 스키마도 달력에서 쓰는 형태로 같이 넣어줌(안전)
+    // 핵심: 존재/미존재 상관없이 항상 +1
+    // 스키마도 달력에서 쓰는 형태로 같이 넣어줌(안전)
     tx.set(
       sRef,
       {
@@ -132,7 +132,7 @@ export async function restoreDiary(uid: string, diaryId: string) {
   });
 }
 
-// ✅ 완전삭제: 문서 hard delete + (본문/첨부) 이미지 Storage 삭제
+// 완전삭제: 문서 hard delete + (본문/첨부) 이미지 Storage 삭제
 // 주의: soft delete 단계에서 diaryDays count를 이미 감소시켰으므로
 //       여기서는 diaryDays를 다시 건드리지 않는다(중복 감소 방지).
 export async function hardDeleteDiaryAndImages(uid: string, diaryId: string) {

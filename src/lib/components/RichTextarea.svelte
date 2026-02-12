@@ -15,7 +15,7 @@
   let editorEl: HTMLDivElement | null = null;
   let fileEl: HTMLInputElement | null = null;
 
-  // ✅ 외부 html 주입 루프 방지용
+  // 외부 html 주입 루프 방지용
   let lastAppliedHtml = "";
   let composing = false; // IME 입력(한글 조합) 중 커서 튐 방지
 
@@ -23,10 +23,17 @@
     if (!editorEl) return;
     html = editorEl.innerHTML ?? "";
     text = (editorEl.innerText ?? "").trim();
-    lastAppliedHtml = html; // ✅ 사용자가 편집한 결과를 기준으로 갱신
+    lastAppliedHtml = html; // 사용자가 편집한 결과를 기준으로 갱신
   }
 
+  let localError = "";
   function openPicker() {
+    localError = "";
+
+    if (hasAnyImage()) {
+      localError = "본문 이미지는 1장만 추가할 수 있어요. 기존 이미지를 삭제한 뒤 다시 추가해 주세요.";
+      return;
+    }
     fileEl?.click();
   }
 
@@ -35,7 +42,7 @@
       `l_${Date.now()}_${Math.random().toString(16).slice(2)}`);
   }
 
-  // ✅ (핵심) 외부에서 html 변경 → editor에 반영
+  // (핵심) 외부에서 html 변경 → editor에 반영
   function applyExternalHtml(next: string) {
     if (!editorEl) return;
 
@@ -225,7 +232,22 @@
     input.value = "";
   }
 
-  // ✅ 마운트 시(수정 화면 진입) html 주입
+  function hasAnyImage(): boolean {
+    if (!editorEl) return false;
+
+    // (1) 임시 이미지(pending) 존재
+    const pendingCount = pending.size;
+
+    // (2) 이미 업로드된 이미지(data-path) 존재
+    const savedImgs = editorEl.querySelectorAll("img[data-path]").length;
+
+    // (3) 임시 이미지(data-local) 존재
+    const localImgs = editorEl.querySelectorAll("img[data-local]").length;
+
+    return pendingCount + savedImgs + localImgs > 0;
+  }
+
+  // 마운트 시(수정 화면 진입) html 주입
   onMount(() => {
     if (editorEl) {
       editorEl.innerHTML = html ?? "";
@@ -265,14 +287,13 @@
     </svg>
   </button>
 
-  <input
-    bind:this={fileEl}
-    type="file"
-    accept="image/*"
-    multiple
-    on:change={handlePick}
-    style="display:none"
-  />
+  {#if localError}
+    <div class="imgErr">{localError}</div>
+  {/if}
+
+  <!-- <input bind:this={fileEl} type="file" accept="image/*" multiple on:change={handlePick} style="display:none" /> -->
+  <!-- firebase 스토리지 용량 이슈로 한개만 처리 가능 하게 변경 처리 -->
+  <input bind:this={fileEl} type="file" accept="image/*" on:change={handlePick} style="display:none" />
 </div>
 
 <style>

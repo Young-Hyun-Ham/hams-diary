@@ -21,7 +21,7 @@ export async function ensureUserDoc(u: User) {
       providerId: u.providerData?.[0]?.providerId ?? "",
       lastLoginAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
-      // ✅ 최초 생성 시에만 들어가도록 merge로 처리
+      // 최초 생성 시에만 들어가도록 merge로 처리
       createdAt: serverTimestamp(),
     },
     { merge: true }

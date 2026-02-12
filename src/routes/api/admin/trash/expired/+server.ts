@@ -14,7 +14,7 @@ function getUidFromDiaryPath(path: string) {
 export async function GET() {
   const cutoff = new Date(Date.now() - ONE_DAY_MS);
 
-  // ✅ collectionGroup으로 전체 유저의 diaries 중 조건 맞는 것만
+  // collectionGroup으로 전체 유저의 diaries 중 조건 맞는 것만
   const snap = await adb
     .collectionGroup("diaries")
     .where("deleted", "==", true)

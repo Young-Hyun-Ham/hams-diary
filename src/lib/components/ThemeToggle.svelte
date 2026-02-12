@@ -1,7 +1,7 @@
 <!-- src/lib/components/ThemeToggle.svelte -->
 <script lang="ts">
   import { onMount } from "svelte";
-  const KEY = "anniv:theme:v1";
+  const KEY = "hdp:theme:v1";
   type THEME_TYPE = "light" | "dark" | "system";
 
   let theme: THEME_TYPE = "light";
@@ -21,10 +21,10 @@
     const ds = (document.documentElement.dataset.theme || "").trim();
     const ls = (localStorage.getItem(KEY) || "").trim();
 
-    // ✅ dataset이 비어있으면 localStorage를 우선 사용
+    // dataset이 비어있으면 localStorage를 우선 사용
     const cur = (ds || ls || "light") as THEME_TYPE;
 
-    // ✅ 초기에도 실제 적용까지!
+    // 초기에도 실제 적용까지!
     applyTheme(cur);
   });
 </script>
