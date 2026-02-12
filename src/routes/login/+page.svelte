@@ -90,7 +90,7 @@
 <div class="wrap">
   <div class="card">
     <div class="title">📓 My Diary</div>
-    <div class="sub">로그인 후 내 일기를 안전하게 저장해요</div>
+    <div class="sub">로그인 후 내 Diary를 안전하게 저장해요</div>
 
     <button class="btn" on:click={loginGoogle} disabled={busy}>
       {busy ? "로그인 중..." : "Google로 로그인"}

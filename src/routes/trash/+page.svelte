@@ -193,13 +193,13 @@
     <div class="titleRow">
       <h2 class="h">휴지통</h2>
 
-      <div class="note" title="삭제된 일기는 24시간 동안 보관됩니다.">
+      <div class="note" title="삭제된 Diary는 24시간 동안 보관됩니다.">
         <svg class="noteIcon" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
           <path fill="currentColor"
             d="M12 2a10 10 0 1 0 .001 20.001A10 10 0 0 0 12 2Zm1 14h-2v-2h2v2Zm0-4h-2V6h2v6Z" />
         </svg>
         <span class="noteText">
-          삭제된 일기는 <b>24시간 보관</b> 후 관리자에 의해 <b>완전 삭제</b>될 수 있어요.
+          삭제된 Diary는 <b>24시간 보관</b> 후 관리자에 의해 <b>완전 삭제</b>될 수 있어요.
         </span>
       </div>
     </div>

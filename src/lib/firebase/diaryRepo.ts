@@ -45,7 +45,7 @@ function diariesCol(uid: string) {
 }
 
 /**
- * 일기 추가 (read → write 순서 준수)
+ * Diary 추가 (read → write 순서 준수)
  */
 export async function addDiary(
   uid: string,
@@ -112,7 +112,7 @@ export async function addDiary(
 }
 
 /**
- * 일기 수정 (날짜 변경 포함) (read → write 순서 준수)
+ * Diary 수정 (날짜 변경 포함) (read → write 순서 준수)
  */
 export async function updateDiary(uid: string, diaryId: string, patch: DiaryUpdateInput) {
   const dRef = diaryRef(uid, diaryId);
@@ -206,7 +206,7 @@ export async function updateDiary(uid: string, diaryId: string, patch: DiaryUpda
 }
 
 /**
- * 일기 삭제 (hard delete) (read → write 순서 준수)
+ * Diary 삭제 (hard delete) (read → write 순서 준수)
  */
 export async function deleteDiary(uid: string, diaryId: string) {
   const dRef = diaryRef(uid, diaryId);

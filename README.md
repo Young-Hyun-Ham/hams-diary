@@ -1,4 +1,4 @@
-# 일기장
+# H.D.P. (Hams Diary Project)
 
 ---
 

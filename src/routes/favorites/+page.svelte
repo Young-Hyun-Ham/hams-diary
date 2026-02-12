@@ -74,7 +74,7 @@
     <button class="back" on:click={() => goto("/diary")}>←</button>
     <div class="hgroup">
       <div class="title">⭐ 즐겨찾기</div>
-      <div class="sub">즐겨찾기한 일기만 모아봤어요</div>
+      <div class="sub">즐겨찾기한 Diary만 모아봤어요</div>
     </div>
   </div>
 
@@ -85,8 +85,8 @@
   {:else if items.length === 0}
     <div class="empty">
       <div class="emoji">📌</div>
-      <div class="msg">아직 즐겨찾기한 일기가 없어요.</div>
-      <button class="btn" on:click={() => goto("/diary")}>일기 보러가기</button>
+      <div class="msg">아직 즐겨찾기한 Diary가 없어요.</div>
+      <button class="btn" on:click={() => goto("/diary")}>Diary 보러가기</button>
     </div>
   {:else}
     <div class="list">

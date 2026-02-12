@@ -62,7 +62,7 @@
           type="button"
           class="cell {c.has ? 'has' : ''} {selectedDate === c.date ? 'sel' : ''}"
           on:click={() => onPick(c.date)}
-          aria-label={`${c.date} ${c.count ? `${c.count}개 일기` : '일기 없음'}`}
+          aria-label={`${c.date} ${c.count ? `${c.count}개` : '내용 없음'}`}
         >
           <div class="top">
             <div class="d">{c.day}</div>

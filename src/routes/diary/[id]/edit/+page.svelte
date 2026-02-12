@@ -5,11 +5,12 @@
   import { page } from "$app/stores";
   import { userState } from "$lib/stores/user";
   import { getDiary } from "$lib/firebase/diaryDetailRepo";
-  import { updateDiary } from "$lib/firebase/diaryRepo";
+  import { updateDiary, softDeleteDiary } from "$lib/firebase/diaryRepo";
   import { uploadDiaryImage, deleteStoragePath, type UploadedImage } from "$lib/firebase/storageRepo";
   import RichTextarea from "$lib/components/RichTextarea.svelte";
 
   $: diaryId = $page.params.id as string;
+  let deleting = false;
 
   // ====== form state ======
   let diaryDate = "";
@@ -29,6 +30,7 @@
   // 기존 저장된 이미지 메타
   let contentImages: UploadedImage[] = []; // 본문용(이미 올라간 것)
   let attachments: UploadedImage[] = [];  // 첨부(이미 올라간 것)
+  let removedPaths = new Set<string>(); // 삭제 요청된 기존 이미지 path 모음
 
   // 새로 추가할 첨부 이미지(저장 전)
   let imgFiles: File[] = [];
@@ -191,7 +193,7 @@
       imgFiles = [];
       imgPreviews = [];
     } catch (e: any) {
-      errorMsg = e?.message ?? "일기를 불러오지 못했어요.";
+      errorMsg = e?.message ?? "Diary를 불러오지 못했어요.";
     } finally {
       loading = false;
     }
@@ -279,6 +281,40 @@
       saving = false;
     }
   }
+
+  async function removeDiary() {
+    if (deleting) return;
+    const uid = $userState.user?.uid;
+    if (!uid) return (errorMsg = "로그인이 필요해요.");
+
+    if (!confirm("삭제하시겠습니까?")) return;
+
+    deleting = true;
+    errorMsg = "";
+    try {
+      // 1) Firestore 삭제(트랜잭션으로 diaryDays도 감소)
+      // hard delete
+      // await deleteDiary(uid, diaryId);
+      // soft delete -> 휴지통에서 완전 삭제 처리 함.
+      await softDeleteDiary(uid, diaryId);
+
+      // 2) Storage 이미지 삭제(실패해도 페이지 이동)
+      for (const it of attachments) {
+        if (it?.path) {
+          try { await deleteStoragePath(it.path); } catch {}
+        }
+      }
+
+      // 완료 후 상세로
+      await goto(`/diary`);
+    } catch (e: any) {
+      errorMsg = e?.message ?? "삭제 실패";
+      errorMsg = e?.message ?? "저장 실패";
+    } finally {
+      deleting = false;
+      saving = false;
+    }
+  }
 </script>
 
 {#if loading}
@@ -288,6 +324,9 @@
     <div class="topbar">
       <button class="btn" type="button" on:click={back}>← 돌아가기</button>
       <div class="spacer"></div>
+      <button class="btn danger" type="button" on:click={removeDiary} disabled={deleting}>
+        {deleting ? "삭제 중..." : "삭제"}
+      </button>
       <button class="btn primary" type="button" on:click={save} disabled={saving}>
         {saving ? "저장 중..." : "저장"}
       </button>
@@ -458,6 +497,7 @@
     cursor: pointer;
   }
   .primary { background: #4f46e5; color: #fff; border: none; font-weight: 800; }
+  .danger { background:#ef4444; color:#fff; border:none; font-weight:800; }
   .btn:disabled { opacity: 0.7; cursor: default; }
 
   .panel {

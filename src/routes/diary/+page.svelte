@@ -124,9 +124,9 @@
     <div class="state err">{errorMsg}</div>
   {:else if items.length === 0}
     <div class="empty">
-      <div class="t">아직 일기가 없어요</div>
-      <div class="s">{selectedDate ? "이 날짜에 첫 일기를 작성해볼까요?" : "첫 일기를 작성해볼까요?"}</div>
-      <button class="primary" type="button" on:click={openNew}>일기 작성</button>
+      <div class="t">등록한 내용이 없어요</div>
+      <div class="s">{selectedDate ? "이 날짜에 첫 내용을 작성해볼까요?" : "첫 내용를 작성해볼까요?"}</div>
+      <button class="primary" type="button" on:click={openNew}>작성</button>
     </div>
   {:else}
     <div class="list">
@@ -147,7 +147,7 @@
     {/if}
   {/if}
 
-  <button class="fab" type="button" on:click={openNew} aria-label="새 일기 작성">＋</button>
+  <button class="fab" type="button" on:click={openNew} aria-label="새 Diary 작성">＋</button>
 </div>
 
 <style>

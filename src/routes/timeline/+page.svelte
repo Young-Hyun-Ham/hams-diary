@@ -150,7 +150,7 @@
   {:else if items.length === 0}
     <div class="state empty">
       아직 타임라인에 표시할 기록이 없어요.
-      <div class="mini">일기 등록에서 “타임라인 표시”를 켜면 여기에 보여요.</div>
+      <div class="mini">Diary 등록에서 “타임라인 표시”를 켜면 여기에 보여요.</div>
     </div>
   {:else}
     <div class="timeline">
