@@ -122,11 +122,11 @@
     // preview revoke
     imgPreviews.forEach((p) => URL.revokeObjectURL(p.url));
 
-    // ✅ 1장 정책이면 그냥 통째로 비우는 게 맞음
+    // 1장 정책이면 그냥 통째로 비우는 게 맞음
     imgFiles = [];
     imgPreviews = [];
 
-    // ✅ input도 초기화(같은 파일 재선택 가능)
+    // input도 초기화(같은 파일 재선택 가능)
     if (fileInputEl) fileInputEl.value = "";
   }
 

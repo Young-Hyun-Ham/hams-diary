@@ -1,25 +1,23 @@
 // src/lib/server/firebaseAdmin.ts
-import { FIREBASE_SERVICE_ACCOUNT_JSON_BASE64 } from '$env/static/private';
-import { PUBLIC_FIREBASE_STORAGE_BUCKET } from '$env/static/public';
+import { env } from "$env/dynamic/private";
+import { PUBLIC_FIREBASE_STORAGE_BUCKET } from "$env/static/public";
 import admin from "firebase-admin";
+
+function requireEnv(name: string, v?: string) {
+  if (!v || !v.trim()) throw new Error(`Missing env: ${name}`);
+  return v;
+}
 
 function init() {
   if (admin.apps.length) return admin.app();
-  
-  // Base64 문자열을 Buffer로 바꾼 뒤 UTF-8 문자열로 변환
-  const raw = Buffer.from(FIREBASE_SERVICE_ACCOUNT_JSON_BASE64, 'base64').toString('utf-8');
 
-  if (raw) {
-    const cred = admin.credential.cert(JSON.parse(raw));
-    return admin.initializeApp({
-      credential: cred,
-      storageBucket: PUBLIC_FIREBASE_STORAGE_BUCKET,
-    });
-  }
+  const b64 = env.FIREBASE_SERVICE_ACCOUNT_JSON_BASE64;
+  // Vercel에서는 applicationDefault()에 기대지 말고, 서비스계정이 없으면 서버기능을 막는게 안전
+  const raw = Buffer.from(requireEnv("FIREBASE_SERVICE_ACCOUNT_JSON_BASE64", b64), "base64").toString("utf-8");
 
-  // 2) GOOGLE_APPLICATION_CREDENTIALS: 파일 경로 방식
+  const cred = admin.credential.cert(JSON.parse(raw));
   return admin.initializeApp({
-    credential: admin.credential.applicationDefault(),
+    credential: cred,
     storageBucket: PUBLIC_FIREBASE_STORAGE_BUCKET,
   });
 }

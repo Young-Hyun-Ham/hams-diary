@@ -4,12 +4,14 @@
   import { goto } from "$app/navigation";
   import { onMount } from "svelte";
   import { userState } from "$lib/stores/user";
+  import { Capacitor } from "@capacitor/core";
 
   import {
     GoogleAuthProvider,
     signInWithPopup,
     signInWithRedirect,
     getRedirectResult,
+    signInWithCredential,
     type User,
   } from "firebase/auth";
   import { auth } from "$lib/firebase/client";
@@ -44,22 +46,31 @@
     busy = true;
 
     try {
-      const provider = new GoogleAuthProvider();
-
       // Capacitor(네이티브 WebView)는 popup이 막히는 경우가 많음
-      const isCapacitor = browser && !!(window as any)?.Capacitor;
+      // const isCapacitor = browser && !!(window as any)?.Capacitor;
+      const isNative = browser && Capacitor.isNativePlatform();
+      
+      if (isNative) {
+        const { GoogleAuth } = await import('@codetrix-studio/capacitor-google-auth')
+        // 앱 내부 네이티브 로그인
+        const g = await GoogleAuth.signIn();
+        const idToken = g.authentication?.idToken;
 
-      if (isCapacitor) {
-        await signInWithRedirect(auth, provider);
-        return;
-        // redirect는 여기서 끝 (페이지가 떠나므로 아래 goto는 의미 없음)
-        return;
-      } else {
-        await signInWithPopup(auth, provider);
-        // auth 상태가 store에 반영될 때까지 기다렸다가 이동(레이스 방지)
+        if (!idToken) throw new Error("Google idToken을 가져오지 못했어요.");
+
+        const cred = GoogleAuthProvider.credential(idToken);
+        await signInWithCredential(auth, cred);
+
         await waitForUser();
         await goto("/diary", { replaceState: true });
+        return;
       }
+      
+      // 웹은 기존대로 팝업
+      const provider = new GoogleAuthProvider();
+      await signInWithPopup(auth, provider);
+      await waitForUser();
+      await goto("/diary", { replaceState: true });
     } catch (e: any) {
       errorMsg = e?.message ?? "로그인에 실패했어요.";
     } finally {

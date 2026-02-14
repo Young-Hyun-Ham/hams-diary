@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "884083912072",
+    "project_id": "hams-diary",
+    "storage_bucket": "hams-diary.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:884083912072:android:8584afeaddc28e6aab1e3d",
+        "android_client_info": {
+          "package_name": "com.hams.diary"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "884083912072-fgimtt8ebl4ck500gth4ca87t9bjrbpu.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDM1ompOV6U910AuvikvNk7Xoe5DxwS4vU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "884083912072-fgimtt8ebl4ck500gth4ca87t9bjrbpu.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

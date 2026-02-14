@@ -1,4 +1,5 @@
-import adapter from '@sveltejs/adapter-auto';
+// svelte.config.js
+import adapter from '@sveltejs/adapter-static';
 import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 
 /** @type {import('@sveltejs/kit').Config} */
@@ -9,8 +10,13 @@ const config = {
     warningFilter: (warning) => !warning.code.startsWith('a11y_') && !warning.code.startsWith('element_')
   },
 	kit: {
-		adapter: adapter()
-	}
+    adapter: adapter({
+      fallback: 'index.html'
+    }),
+    paths: {
+      relative: true
+    }
+  }
 };
 
 export default config;

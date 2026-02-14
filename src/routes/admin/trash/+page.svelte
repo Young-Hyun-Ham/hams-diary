@@ -1,5 +1,7 @@
 <!-- src/routes/admin/trash/+page.svelte -->
  <script lang="ts">
+    import { apiUrl } from "$lib/api";
+
   let loading = true;
   let errorMsg = "";
   let users: any[] = [];
@@ -13,7 +15,7 @@
     loading = true;
     errorMsg = "";
     try {
-      const r = await fetch("/api/admin/trash/expired");
+      const r = await fetch(apiUrl("/api/admin/trash/expired"));
       if (!r.ok) throw new Error(await r.text());
       const j = await r.json();
       users = j.users ?? [];
@@ -31,7 +33,7 @@
     busyUid = uid;
     errorMsg = "";
     try {
-      const r = await fetch(`/api/admin/trash/expired/${uid}`, { method: "DELETE" });
+      const r = await fetch(apiUrl(`/api/admin/trash/expired/${uid}`), { method: "DELETE" });
       if (!r.ok) throw new Error(await r.text());
       await load();
     } catch (e: any) {
@@ -54,15 +56,23 @@
     errorMsg = "";
 
     try {
-      for (const u of users) {
-        if ((u.count ?? 0) <= 0) {
-          bulkDone += 1;
-          continue;
-        }
-        const r = await fetch(`/api/admin/trash/expired/${u.uid}`, { method: "DELETE" });
-        if (!r.ok) throw new Error(await r.text());
-        bulkDone += 1;
-      }
+      const payload = {
+        users: users.map((u) => ({ uid: u.uid, count: u.count ?? 0 }))
+      };
+
+      const r = await fetch(apiUrl("/api/admin/trash/expired/purgeAll"), {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (!r.ok) throw new Error(await r.text());
+
+      const j = await r.json();
+      bulkDone = j.done ?? 0;
+      bulkTotal = j.total ?? 0;
+
+      // 결과 반영
       await load();
     } catch (e: any) {
       errorMsg = e?.message ?? "전체삭제 실패";

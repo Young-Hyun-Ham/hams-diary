@@ -6,6 +6,35 @@
   import { auth } from "$lib/firebase/client";
   import { signOut } from "firebase/auth";
   import { goto } from "$app/navigation";
+  import { onMount } from "svelte";
+  import { Capacitor } from "@capacitor/core";
+  import { browser } from "$app/environment";
+  
+  const WEB_CLIENT_ID = "884083912072-fgimtt8ebl4ck500gth4ca87t9bjrbpu.apps.googleusercontent.com";
+
+  onMount(async () => {
+    if (!(browser && Capacitor.isNativePlatform())) return;
+
+    // ✅ 안드로이드 WebView에서 safe-area 값이 0인 경우가 많아서 fallback을 강제로 줌
+    const platform = Capacitor.getPlatform(); // 'android' | 'ios' | 'web'
+    if (platform === "android") {
+      // 보통 24px~28px 사이. S24 Ultra면 24px이 무난
+      document.documentElement.style.setProperty("--safe-top", "24px");
+    }
+
+    // ✅ GoogleAuth initialize (동적 import)
+    const { GoogleAuth } = await import("@codetrix-studio/capacitor-google-auth");
+    GoogleAuth.initialize({
+      clientId: WEB_CLIENT_ID,
+      scopes: ["profile", "email"],
+      grantOfflineAccess: true,
+    });
+
+    // ✅ StatusBar overlay 끄기 (기기마다 즉시 반영이 안 되더라도 위 fallback이 커버)
+    const { StatusBar, Style } = await import("@capacitor/status-bar");
+    await StatusBar.setOverlaysWebView({ overlay: false });
+    await StatusBar.setStyle({ style: Style.Light }); // 필요하면 Dark로 변경
+  });
 
   const allowList = import.meta.env.VITE_ADMIN_ALLOW_LIST;
   // $: 를 사용하면 $userState.user가 바뀔 때마다 자동으로 실행됩니다.
@@ -60,7 +89,13 @@
 </div>
 
 <style>
+  /* ✅ 상태바/노치 영역 보정 (Android/iOS 대응) */
+  :global(:root) {
+    --safe-top: env(safe-area-inset-top, 0px);
+  }
+
   .actions { display:flex; align-items:center; gap:10px; }
+
   .btn-ghost{
     padding: 8px 10px;
     border-radius: 10px;
@@ -70,8 +105,9 @@
     font-size: 13px;
     cursor: pointer;
   }
-  
+
   .me { display:flex; align-items:center; gap:8px; font-size:12px; opacity:0.8; }
+
   .trashBtn{
     width: 32px; height: 32px;
     display:grid; place-items:center;
@@ -90,15 +126,21 @@
     color: var(--text);
   }
 
+  /* ✅ 헤더: safe-top만큼 위 여백 확보 + 높이 보정 */
   .header {
     position: sticky;
     top: 0;
     z-index: 10;
-    height: 56px;
+
+    /* 기존 56px 헤더에 safe-top을 더해 겹침 방지 */
+    height: calc(56px + var(--safe-top));
     padding: 0 16px;
+    padding-top: var(--safe-top);
+
     display: flex;
     align-items: center;
     justify-content: space-between;
+
     backdrop-filter: blur(8px);
     background: var(--panel);
     border-bottom: 1px solid var(--border);
