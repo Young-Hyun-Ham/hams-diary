@@ -29,9 +29,9 @@ function corsHeaders(origin: string | null) {
 export const handle: Handle = async ({ event, resolve }) => {
   const origin = event.request.headers.get("origin");
 
-  // ✅ API만 CORS 적용
+  // API만 CORS 적용
   if (event.url.pathname.startsWith("/api/")) {
-    // ✅ Preflight(OPTIONS) 먼저 처리
+    // Preflight(OPTIONS) 먼저 처리
     if (event.request.method === "OPTIONS") {
       return new Response(null, {
         status: 204,
