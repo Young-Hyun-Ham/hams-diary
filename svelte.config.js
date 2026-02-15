@@ -1,7 +1,12 @@
 // svelte.config.js
-import adapter from '@sveltejs/adapter-static';
+import dotenv from 'dotenv';
+dotenv.config();
+import vercel from '@sveltejs/adapter-vercel';
+import statik from '@sveltejs/adapter-static';
 import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 
+const isCap = process.env.BUILD_TARGET === 'capacitor';
+// console.log("isCap =====>", process.env.BUILD_TARGET)
 /** @type {import('@sveltejs/kit').Config} */
 const config = {
 	preprocess: vitePreprocess(),
@@ -10,11 +15,9 @@ const config = {
     warningFilter: (warning) => !warning.code.startsWith('a11y_') && !warning.code.startsWith('element_')
   },
 	kit: {
-    adapter: adapter({
-      pages: 'build',
-      assets: 'build',
-      fallback: 'index.html'
-    }),
+    adapter: isCap
+      ? statik({ pages: 'build', assets: 'build', fallback: 'index.html' })
+      : vercel(),
     paths: {
       relative: true
     }
