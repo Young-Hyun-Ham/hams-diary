@@ -19,3 +19,14 @@ const decodedJson = Buffer.from(FIREBASE_SERVICE_ACCOUNT_JSON_BASE64, 'base64').
 // 2. JSON 파싱
 const raw = JSON.parse(decodedJson);
 ```
+
+---
+
+# 수정내용 안드로이드에 빌드
+- pnpm run build 
+- pnpm exec cap sync android
+- pnpm exec cap open android
+# apk 만들기
+- android studio open 한 후 상단메뉴 build > Generate App Bundles or APKs > Generate APKs
+- project root > /android/app/build/outputs/apk/debug 위치에 apk 파일 생성 됨.
+- 해당 apk 핸드폰으로 이동하여 설치

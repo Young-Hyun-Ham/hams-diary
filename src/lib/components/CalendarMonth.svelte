@@ -84,8 +84,8 @@
             {#if c.count > 0}
               <div class="badge">
                 {sizeType === "small" || sizeType === "medium"
-                  ? "9+" // (c.count > 9 ? "9+" : c.count)
-                  : "99+" // (c.count > 99 ? "99+" : c.count)
+                  ? (c.count > 9 ? "9+" : c.count + "")
+                  : (c.count > 99 ? "99+" : c.count + "")
                 }
               </div>
             {/if}
